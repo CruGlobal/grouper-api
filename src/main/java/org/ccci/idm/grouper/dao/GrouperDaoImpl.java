@@ -1,0 +1,204 @@
+package org.ccci.idm.grouper.dao;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import org.ccci.idm.grouper.obj.GrouperGroup;
+import org.ccci.idm.grouper.obj.GrouperMembership;
+import org.ccci.idm.obj.SsoUser;
+
+import edu.internet2.middleware.grouper.Group;
+import edu.internet2.middleware.grouper.GroupFinder;
+import edu.internet2.middleware.grouper.GrouperSession;
+import edu.internet2.middleware.grouper.Member;
+import edu.internet2.middleware.grouper.MemberFinder;
+import edu.internet2.middleware.grouper.Stem;
+import edu.internet2.middleware.grouper.StemFinder;
+import edu.internet2.middleware.grouper.SubjectFinder;
+import edu.internet2.middleware.grouper.audit.AuditEntry;
+import edu.internet2.middleware.grouper.audit.GrouperEngineBuiltin;
+import edu.internet2.middleware.grouper.audit.UserAuditQuery;
+import edu.internet2.middleware.grouper.exception.SessionException;
+import edu.internet2.middleware.grouper.hibernate.GrouperContext;
+import edu.internet2.middleware.grouper.privs.AccessPrivilege;
+import edu.internet2.middleware.subject.Subject;
+
+public class GrouperDaoImpl implements GrouperDao
+{
+    private String sessionOwner = null;
+    private Subject loggedInSubject = null;
+    private Member loggedInMember = null;
+    
+    private GrouperSession grouperSession = null;
+    private GrouperContext grouperContext = null;
+
+    final private String SystemFolder = "sys";
+    final private String AttestationAttributeDefName = "attestation";
+
+    public GrouperDaoImpl(String sessionOwner) throws SessionException
+    {
+        this.sessionOwner = sessionOwner;
+        if(sessionOwner==null)
+        {
+            grouperSession = GrouperSession.startRootSession();
+        }
+        else
+        {
+            grouperSession = GrouperSession.start(SubjectFinder.findByIdOrIdentifier(sessionOwner, true));
+            grouperContext = GrouperContext.createNewDefaultContext(GrouperEngineBuiltin.UI, false, true);
+            loggedInSubject = SubjectFinder.findByIdOrIdentifier(sessionOwner, true);
+            loggedInMember = MemberFinder.findBySubject(grouperSession, loggedInSubject, true);
+            grouperContext.setLoggedInMemberId(loggedInMember.getUuid());
+            grouperContext.setLoggedInMemberIdActAs(loggedInMember.getUuid());
+        }
+    }
+    
+    public List<GrouperGroup> loadAllGroups(String folderPath)
+    {
+        Stem stem = StemFinder.findByName(grouperSession, folderPath, true);
+        List<GrouperGroup> groups = new ArrayList<GrouperGroup>();
+        for (Group group : (Set<Group>)stem.getChildGroups())
+        {
+            groups.add(new GrouperGroup(group));
+        }
+        return groups;
+    }
+    
+    public GrouperGroup loadGroup(String fullPath)
+    {
+        Group group = GroupFinder.findByName(grouperSession, fullPath, true);
+        if(group==null) return null;
+        return new GrouperGroup(group);
+    }
+    
+
+    public void removeGroup(String fullPath)
+    {
+        GroupFinder.findByName(grouperSession, fullPath, true).delete();
+    }
+
+
+    public void addGroup(GrouperGroup newGroup, String... admins)
+    {
+        Stem stem = StemFinder.findByName(grouperSession, newGroup.getContainingFolderPath(), true);
+        Group createdGroup = stem.addChildGroup(newGroup.getId(), newGroup.getDisplayName());
+        for(String admin : admins)
+        {
+            createdGroup.grantPriv(SubjectFinder.findById(admin, true), AccessPrivilege.ADMIN, false);
+        }
+    }
+
+    public void addMember(String user, String groupName) throws Exception
+    {
+        // add new member to the group
+        Subject subject = SubjectFinder.findByIdOrIdentifier(user, true);
+        Group group = GroupFinder.findByName(grouperSession, groupName, true);
+        group.addMember(subject, false);
+    }
+
+    public void deleteMember(String member, String group) throws Exception
+    {
+        // delete the member from the group
+        GroupFinder.findByName(grouperSession, group, true).deleteMember(SubjectFinder.findByIdOrIdentifier(member, true));
+    }
+    
+    
+    public SsoUser getAttester(String memberName, String groupName) throws Exception
+    {
+        Subject subj = SubjectFinder.findById(memberName, true);
+        Member member = MemberFinder.findBySubject(grouperSession, subj, true);
+        Group group = GroupFinder.findByName(grouperSession, groupName, true);
+        
+        List<AuditEntry> entries = (new UserAuditQuery()).addAuditTypeAction("membership", "addGroupMembership").addAuditTypeFieldValue("memberId", member.getUuid()).addAuditTypeFieldValue("groupId", group.getUuid()).execute();
+        AuditEntry latest = null;
+        for(AuditEntry entry : entries)
+        {
+            if(latest==null || entry.getCreatedOn().after(latest.getCreatedOn()))
+            {
+                latest = entry;
+            }
+        }
+        if(latest!=null)
+        {
+            Member attester = MemberFinder.findByUuid(grouperSession, latest.getLoggedInMemberId(), true);
+            return new SsoUser(attester.getSubject().getId(), attester.getSubject().getName());
+        }
+        return null;
+    }
+
+/*   
+    public String getAttester(String memberName, String groupName) throws Exception
+    {
+      Membership membership = MembershipFinder.findImmediateMembership(
+          grouperSession, GroupFinder.findByName(grouperSession, group, true), 
+          SubjectFinder.findByIdOrIdentifier(member, true), Group.getDefaultList(), true);
+
+        List<String> attesters = membership.getAttributeValueDelegate().retrieveValuesString(SystemFolder + ":" + AttestationAttributeDefName);
+
+        if (attesters.size() < 1)
+            return null;
+            //throw new Exception("Membership does not have an attester!");
+
+        // the list should only contain one element
+        return attesters.get(0);
+    }
+
+    private synchronized void setAttester(String member, String group) throws Exception
+    {
+      GrouperSession grouperSession2 = GrouperSession.internal_getRootSession();
+      
+        // get the membership
+      Membership membership = MembershipFinder.findImmediateMembership(
+          grouperSession2, GroupFinder.findByName(grouperSession, group, true), 
+              SubjectFinder.findByIdOrIdentifier(member, true), Group.getDefaultList(), true);
+  
+        // record the attester on the membership
+        membership.getAttributeValueDelegate().assignValue(SystemFolder + ":" + AttestationAttributeDefName, sessionOwner);
+        List<String> attesters = membership.getAttributeValueDelegate().retrieveValuesString(SystemFolder + ":" + AttestationAttributeDefName);
+        if (attesters.size() < 1)
+          throw new Exception("failed to set attribute!");
+    }
+*/
+
+    
+
+    public Set<GrouperMembership> getMemberships(String memberName, String folder) throws Exception
+    {
+        Set<GrouperMembership> memberships = new HashSet<GrouperMembership>();
+
+        // get user groups, searching from the specified folder
+        Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
+        Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        Stem stem = folder != null ? StemFinder.findByName(grouperSession, folder, true) : null;
+        Stem.Scope scope = folder != null ? Stem.Scope.SUB : null;
+        Set<Group> groups = member.getGroups(Group.getDefaultList(), null, stem, scope, null, null);
+
+        Iterator<Group> iterator = groups.iterator();
+        while (iterator.hasNext())
+        {
+            Group group = iterator.next();
+            memberships.add(new GrouperMembership(memberName, group.getName(), getAttester(memberName, group.getName()).getUsername()));
+        }
+
+        return memberships;
+    }
+
+    public void close()
+    {
+        GrouperSession.stopQuietly(grouperSession);
+        GrouperContext.deleteDefaultContext();
+    }
+
+    public SsoUser loadSsoUser(String subjectId)
+    {
+        Subject subj = SubjectFinder.findById(subjectId, false);
+        
+        if(subj==null) return null;
+        if(!subj.getSourceId().equals("ccciLdap")) return null;
+        
+        return new SsoUser(subj.getId(), subj.getName());
+    }
+}
