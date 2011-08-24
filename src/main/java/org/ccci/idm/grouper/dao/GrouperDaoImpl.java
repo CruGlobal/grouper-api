@@ -21,6 +21,7 @@ import edu.internet2.middleware.grouper.SubjectFinder;
 import edu.internet2.middleware.grouper.audit.AuditEntry;
 import edu.internet2.middleware.grouper.audit.GrouperEngineBuiltin;
 import edu.internet2.middleware.grouper.audit.UserAuditQuery;
+import edu.internet2.middleware.grouper.exception.GroupNotFoundException;
 import edu.internet2.middleware.grouper.exception.SessionException;
 import edu.internet2.middleware.grouper.hibernate.GrouperContext;
 import edu.internet2.middleware.grouper.privs.AccessPrivilege;
@@ -69,9 +70,17 @@ public class GrouperDaoImpl implements GrouperDao
     
     public GrouperGroup loadGroup(String fullPath)
     {
-        Group group = GroupFinder.findByName(grouperSession, fullPath, true);
-        if(group==null) return null;
-        return new GrouperGroup(group);
+        try
+        {
+            Group group = GroupFinder.findByName(grouperSession, fullPath, true);
+            if(group==null) return null;
+            return new GrouperGroup(group);
+        }
+        catch (GroupNotFoundException e)
+        {
+            return null;
+        }
+        
     }
     
 
