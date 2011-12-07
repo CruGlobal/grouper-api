@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>edu.internet2.middleware.grouper</groupId>
 			<artifactId>grouper-core</artifactId>
-			<version>1.6.3-SNAPSHOT</version>
+			<version>1.6.3-CCCI-V2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.internet2.middleware.grouper</groupId>
