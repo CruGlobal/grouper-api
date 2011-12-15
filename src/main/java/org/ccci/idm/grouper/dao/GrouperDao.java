@@ -1,11 +1,15 @@
 package org.ccci.idm.grouper.dao;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.grouper.obj.GrouperMembership;
 import org.ccci.idm.obj.SsoUser;
+
+import edu.internet2.middleware.grouper.Group;
+import edu.internet2.middleware.grouper.Member;
 
 public interface GrouperDao
 {
@@ -20,6 +24,8 @@ public interface GrouperDao
     public void addMember(String user, String group) throws Exception;    
     public void deleteMember(String member, String group) throws Exception;
     public SsoUser getAttester(String member, String group) throws Exception;
+    public void setExpiration(String member, String group, Date expiration);
+    public Date getExpiration(String member, String group);
 
     /**
      * Get user group memberships
