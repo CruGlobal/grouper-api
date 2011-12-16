@@ -27,8 +27,6 @@ import edu.internet2.middleware.grouper.audit.UserAuditQuery;
 import edu.internet2.middleware.grouper.exception.GroupNotFoundException;
 import edu.internet2.middleware.grouper.exception.SessionException;
 import edu.internet2.middleware.grouper.hibernate.GrouperContext;
-import edu.internet2.middleware.grouper.internal.dao.MembershipDAO;
-import edu.internet2.middleware.grouper.misc.GrouperDAOFactory;
 import edu.internet2.middleware.grouper.privs.AccessPrivilege;
 import edu.internet2.middleware.subject.Subject;
 
@@ -154,17 +152,10 @@ public class GrouperDaoImpl implements GrouperDao
 
     private SsoUser getAttesterInternal(Member member, Group group)
     {
-        MembershipDAO dao = GrouperDAOFactory.getFactory().getMembership();
-        boolean enabledOnly = true;
-        
-        Set<Membership> memberships = dao.findAllByGroupOwnerAndMember(group.getUuid(), member.getUuid(), enabledOnly);
-        if(memberships.size()>0)
-        {
-            Membership recent = findMostRecentMembership(memberships);
-            Member attester = MemberFinder.findByUuid(grouperSession, recent.getCreatorUuid(), true);
-            return new SsoUser(attester.getSubject().getId(), attester.getSubject().getName());
-        }
-        return null;
+        Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, false);
+        if(membership==null) return null;
+        Member attester = MemberFinder.findByUuid(grouperSession, membership.getCreatorUuid(), true);
+        return new SsoUser(attester.getSubject().getId(), attester.getSubject().getName());
     }
 
 /*   
@@ -218,7 +209,7 @@ public class GrouperDaoImpl implements GrouperDao
         while (iterator.hasNext())
         {
             Group group = iterator.next();
-            memberships.add(new GrouperMembership(memberName, group.getName(), getAttester(memberName, group.getName()).getUsername(), getExpirationInternal(member, group)));
+            memberships.add(new GrouperMembership(memberName, group.getName(), getAttesterInternal(member, group).getUsername(), getExpirationInternal(member, group)));
         }
 
         return memberships;
@@ -229,36 +220,16 @@ public class GrouperDaoImpl implements GrouperDao
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
-
+        
         return getExpirationInternal(member, group);
     }
 
     private Date getExpirationInternal(Member member, Group group)
     {
-        MembershipDAO dao = GrouperDAOFactory.getFactory().getMembership();
-        boolean enabledOnly = true;
-        Set<Membership> memberships = dao.findAllByGroupOwnerAndMember(group.getUuid(), member.getUuid(), enabledOnly);
-        if(memberships.size()==1)
-        {
-            Membership recent = findMostRecentMembership(memberships);
-            return recent.getDisabledTime();
-        }
-        return null;
+        Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, false);
+        if(membership==null) return null;
+        return membership.getDisabledTime();
     }
-
-    private Membership findMostRecentMembership(Set<Membership> memberships)
-    {
-        Membership recent = null;
-        for(Membership m : memberships)
-        {
-            if(recent==null || m.getCreateTime().after(m.getCreateTime()))
-            {
-                recent = m;
-            }
-        }
-        return recent;
-    }
-
 
     
     public void setExpiration(String memberName, String groupName, Date expiration)
@@ -267,16 +238,9 @@ public class GrouperDaoImpl implements GrouperDao
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
         
-        MembershipDAO dao = GrouperDAOFactory.getFactory().getMembership();
-        boolean enabledOnly = true;
-        Set<Membership> memberships = dao.findAllByGroupOwnerAndMember(group.getUuid(), member.getUuid(), enabledOnly);
-        if(memberships.size()==0) throw new RuntimeException("membership not found for "+group.getUuid()+","+member);
-        if(memberships.size()>0)
-        {
-            Membership recent = findMostRecentMembership(memberships);
-            recent.setDisabledTime(expiration==null?null:new Timestamp(expiration.getTime()));
-            dao.update(recent);
-        }
+        Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, true);
+        membership.setDisabledTime(expiration==null?null:new Timestamp(expiration.getTime()));
+        membership.update();
     }
 
     public void close()
