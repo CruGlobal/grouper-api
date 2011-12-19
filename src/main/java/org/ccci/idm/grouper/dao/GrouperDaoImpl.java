@@ -258,4 +258,15 @@ public class GrouperDaoImpl implements GrouperDao
         
         return new SsoUser(subj.getId(), subj.getName());
     }
+
+    @Override
+    public GrouperMembership getMembership(String memberName, String groupName)
+    {
+        Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
+        Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        Group group = GroupFinder.findByName(grouperSession, groupName, true);
+        Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, false);
+        if(membership==null) return null;
+        return new GrouperMembership(memberName, group.getName(), getAttesterInternal(member, group).getUsername(), getExpirationInternal(member, group));
+    }
 }

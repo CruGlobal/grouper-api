@@ -37,5 +37,7 @@ public interface GrouperDao
      */
     public Set<GrouperMembership> getMemberships(String member, String folder) throws Exception;
     
+    public GrouperMembership getMembership(String assigneeId, String roleId);
+    
     public void close();
 }
