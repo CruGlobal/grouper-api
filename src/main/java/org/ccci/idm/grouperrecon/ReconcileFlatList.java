@@ -13,7 +13,7 @@ public abstract class ReconcileFlatList
     @ConfigItem
     private String grouperUser;
     @ConfigItem
-    private String attestorUser;
+    private String adminUser;
     @ConfigItem
     private String groupPrefix;
     
@@ -21,11 +21,11 @@ public abstract class ReconcileFlatList
     
     
    
-    public ReconcileFlatList(String grouperUser, String attestorUser, String groupPrefix)
+    public ReconcileFlatList(String grouperUser, String adminUser, String groupPrefix)
     {
         super();
         this.grouperUser = grouperUser;
-        this.attestorUser = attestorUser;
+        this.adminUser = adminUser;
         this.groupPrefix = groupPrefix;
     }
 
@@ -87,7 +87,7 @@ public abstract class ReconcileFlatList
         group.setDisplayName(externalGroups.getName());
         group.setId(computeGroupId(externalGroups.getName()));
         group.setContainingFolderPath(groupPrefix);
-        gDao.addGroup(group, attestorUser);
+        gDao.addGroup(group, adminUser);
     }
 
     private String computeGroupId(String string)
