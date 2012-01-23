@@ -1,10 +1,12 @@
 package org.ccci.idm.grouper.obj;
 
 import edu.internet2.middleware.grouper.Group;
+import edu.internet2.middleware.grouper.Stem;
 
 public class GrouperGroup
 {
     private String containingFolderPath;
+    private String containingFolderDisplayName;
     private String id;
     private String displayName;
     
@@ -15,9 +17,21 @@ public class GrouperGroup
 
     public GrouperGroup(Group group)
     {
-        containingFolderPath = group.getParentStemName();
         id = group.getExtension();
         displayName = group.getDisplayExtension();
+        
+        Stem parentStem = group.getParentStem();
+        containingFolderDisplayName = parentStem.getDisplayName();
+    }
+
+    public String getFullPath()
+    {
+        return getContainingFolderPath()+":"+getId();
+    }
+
+    public String getFullDisplayName()
+    {
+        return getContainingFolderDisplayName()+":"+getDisplayName();
     }
 
     public void setDisplayName(String descr)
@@ -48,5 +62,15 @@ public class GrouperGroup
     public String getContainingFolderPath()
     {
         return containingFolderPath;
+    }
+
+    public String getContainingFolderDisplayName()
+    {
+        return containingFolderDisplayName;
+    }
+
+    public void setContainingFolderDisplayName(String containingFolderDescr)
+    {
+        this.containingFolderDisplayName = containingFolderDescr;
     }
 }

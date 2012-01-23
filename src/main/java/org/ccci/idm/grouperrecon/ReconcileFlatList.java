@@ -8,7 +8,7 @@ import org.ccci.idm.grouper.obj.GrouperGroup;
 
 import edu.internet2.middleware.grouper.util.ConfigItem;
 
-public abstract class ReconcileFlatList
+public abstract class ReconcileFlatList implements ReconcileList
 {
     @ConfigItem
     private String grouperUser;

@@ -4,19 +4,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.ccci.idm.grouper.obj.GrouperFolder;
 import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.grouper.obj.GrouperMembership;
 import org.ccci.idm.obj.SsoUser;
 
-import edu.internet2.middleware.grouper.Group;
-import edu.internet2.middleware.grouper.Member;
-
 public interface GrouperDao
 {
     public List<GrouperGroup> loadAllGroups(String folder);
+    public List<GrouperFolder> loadAllFolders(String folder);
     public GrouperGroup loadGroup(String fullPath);
+    public GrouperFolder loadFolder(String fullPath);
     public void removeGroup(String id);
+    public void removeStem(String id);
     public void addGroup(GrouperGroup newGroup, String... admins);
+    public void addFolder(GrouperFolder newFolder, String... admins);
     
     public SsoUser loadSsoUser(String subjectId);
     

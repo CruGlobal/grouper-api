@@ -4,7 +4,7 @@ package org.ccci.idm.grouperrecon;
 
 public abstract class ReconciliationTask implements Runnable
 {
-    protected ReconcileFlatList reconProc = null;
+    protected ReconcileList reconProc = null;
 
     @Override
     public void run()
@@ -22,16 +22,16 @@ public abstract class ReconciliationTask implements Runnable
         {
             e.printStackTrace();
             // try a second time
-            closeConnection();
-            openConnection();
-            try
-            {
-                reconProc.reconcileExternalGroups();
-            }
-            catch (Exception e1)
-            {
-                e1.printStackTrace();
-            }
+//            closeConnection();
+//            openConnection();
+//            try
+//            {
+//                reconProc.reconcileExternalGroups();
+//            }
+//            catch (Exception e1)
+//            {
+//                e1.printStackTrace();
+//            }
         }
         finally
         {

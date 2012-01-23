@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.ccci.idm.grouper.obj.GrouperFolder;
 import org.ccci.idm.grouper.obj.GrouperGroup;
 import org.ccci.idm.grouper.obj.GrouperMembership;
 import org.ccci.idm.obj.SsoUser;
@@ -28,6 +29,7 @@ import edu.internet2.middleware.grouper.exception.GroupNotFoundException;
 import edu.internet2.middleware.grouper.exception.SessionException;
 import edu.internet2.middleware.grouper.hibernate.GrouperContext;
 import edu.internet2.middleware.grouper.privs.AccessPrivilege;
+import edu.internet2.middleware.grouper.privs.NamingPrivilege;
 import edu.internet2.middleware.subject.Subject;
 
 public class GrouperDaoImpl implements GrouperDao
@@ -60,6 +62,18 @@ public class GrouperDaoImpl implements GrouperDao
         }
     }
     
+    public List<GrouperFolder> loadAllFolders(String folderPath)
+    {
+        Stem stem = StemFinder.findByName(grouperSession, folderPath, true);
+        List<GrouperFolder> folders = new ArrayList<GrouperFolder>();
+        for (Stem childStem : (Set<Stem>)stem.getChildStems())
+        {
+            folders.add(new GrouperFolder(childStem));
+        }
+        return folders;
+    }
+    
+
     public List<GrouperGroup> loadAllGroups(String folderPath)
     {
         Stem stem = StemFinder.findByName(grouperSession, folderPath, true);
@@ -85,11 +99,32 @@ public class GrouperDaoImpl implements GrouperDao
         }
         
     }
+    public GrouperFolder loadFolder(String fullPath)
+    {
+        try
+        {
+            Stem stem = StemFinder.findByName(grouperSession, fullPath, true);
+            if(stem==null) return null;
+            return new GrouperFolder(stem);
+        }
+        catch (GroupNotFoundException e)
+        {
+            return null;
+        }
+        
+    }
     
 
     public void removeGroup(String fullPath)
     {
         GroupFinder.findByName(grouperSession, fullPath, true).delete();
+        Group grp = GroupFinder.findByName(grouperSession, fullPath, false);
+        if(grp!=null) throw new RuntimeException("delete failed");
+    }
+    
+    public void removeStem(String fullPath)
+    {
+        StemFinder.findByName(grouperSession, fullPath, true).delete();
     }
 
 
@@ -97,12 +132,23 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Stem stem = StemFinder.findByName(grouperSession, newGroup.getContainingFolderPath(), true);
         Group createdGroup = stem.addChildGroup(newGroup.getId(), newGroup.getDisplayName());
-        for(String admin : admins)
+        if(admins!=null) for(String admin : admins)
         {
             createdGroup.grantPriv(SubjectFinder.findById(admin, true), AccessPrivilege.ADMIN, false);
         }
     }
 
+    public void addFolder(GrouperFolder newFolder, String... admins)
+    {
+        Stem stem = StemFinder.findByName(grouperSession, newFolder.getContainingFolderPath(), true);
+        Stem createdStem = stem.addChildStem(newFolder.getId(), newFolder.getDisplayName());
+        if(admins!=null) for(String admin : admins)
+        {
+            createdStem.grantPriv(SubjectFinder.findById(admin, true), NamingPrivilege.CREATE, false);
+            createdStem.grantPriv(SubjectFinder.findById(admin, true), NamingPrivilege.STEM, false);
+        }
+    }
+    
     public void addMember(String user, String groupName) throws Exception
     {
         // add new member to the group
