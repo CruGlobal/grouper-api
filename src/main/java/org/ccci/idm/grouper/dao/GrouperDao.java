@@ -15,6 +15,7 @@ public interface GrouperDao
     public List<GrouperFolder> loadAllFolders(String folder);
     public GrouperGroup loadGroup(String fullPath);
     public GrouperFolder loadFolder(String fullPath);
+    public void loadChildGroupsAndFoldersRecursively(GrouperFolder folder);
     public void removeGroup(String id);
     public void removeStem(String id);
     public void addGroup(GrouperGroup newGroup, String... admins);
@@ -25,6 +26,7 @@ public interface GrouperDao
 
     public void addMember(String user, String group) throws Exception;    
     public void deleteMember(String member, String group) throws Exception;
+    public List<SsoUser> getMembers(String groupFullPath);
     public SsoUser getAttester(String member, String group) throws Exception;
     public void setExpiration(String member, String group, Date expiration);
     public Date getExpiration(String member, String group);

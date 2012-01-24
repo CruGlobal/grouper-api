@@ -43,11 +43,13 @@ public class GrouperFolder
         if(stem.isRootStem())
         {
             containingFolderDisplayName = "";
+            containingFolderPath = "";
         }
         else
         {
             Stem parentStem = stem.getParentStem();
             containingFolderDisplayName = parentStem.getDisplayName();
+            containingFolderPath = parentStem.getName();
         }
     }
 

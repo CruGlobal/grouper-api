@@ -21,6 +21,7 @@ public class GrouperGroup
         displayName = group.getDisplayExtension();
         
         Stem parentStem = group.getParentStem();
+        containingFolderPath = parentStem.getName();
         containingFolderDisplayName = parentStem.getDisplayName();
     }
 

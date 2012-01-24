@@ -17,7 +17,7 @@ public abstract class ReconcileFlatList implements ReconcileList
     @ConfigItem
     private String groupPrefix;
     
-    protected abstract List<ExternalGroup> getExternalGroups() throws Exception;
+    protected abstract List<ExternalNode> getExternalGroups() throws Exception;
     
     
    
@@ -36,19 +36,19 @@ public abstract class ReconcileFlatList implements ReconcileList
         
         GrouperDao gDao = new GrouperDaoImpl(grouperUser);
         
-        List<ExternalGroup> externalGroups = getExternalGroups();
+        List<ExternalNode> externalGroups = getExternalGroups();
         List<GrouperGroup> groups = gDao.loadAllGroups(groupPrefix);
         
         addMissingGroupsForNewExternalGroups(gDao, externalGroups, groups);
         removeGroupsForDeletedExternalGroups(gDao, externalGroups, groups);
     }
 
-    private void removeGroupsForDeletedExternalGroups(GrouperDao gDao, List<ExternalGroup> externalGroups, List<GrouperGroup> groups)
+    private void removeGroupsForDeletedExternalGroups(GrouperDao gDao, List<ExternalNode> externalGroups, List<GrouperGroup> groups)
     {
       for(GrouperGroup group : groups)
       {
           boolean found = false;
-          for(ExternalGroup grouperGroup : externalGroups)
+          for(ExternalNode grouperGroup : externalGroups)
           {
               if(group.getDisplayName().equals(grouperGroup.getName()))
               {
@@ -62,9 +62,9 @@ public abstract class ReconcileFlatList implements ReconcileList
       }
     }
 
-    private void addMissingGroupsForNewExternalGroups(GrouperDao gDao, List<ExternalGroup> externalGroups, List<GrouperGroup> groups)
+    private void addMissingGroupsForNewExternalGroups(GrouperDao gDao, List<ExternalNode> externalGroups, List<GrouperGroup> groups)
     {
-      for(ExternalGroup externalGroup : externalGroups)
+      for(ExternalNode externalGroup : externalGroups)
       {
           boolean found = false;
           for(GrouperGroup group : groups)
@@ -81,7 +81,7 @@ public abstract class ReconcileFlatList implements ReconcileList
       }
     }
 
-    private void createGroupForExternalGroup(GrouperDao gDao, ExternalGroup externalGroups)
+    private void createGroupForExternalGroup(GrouperDao gDao, ExternalNode externalGroups)
     {
         GrouperGroup group = new GrouperGroup();
         group.setDisplayName(externalGroups.getName());

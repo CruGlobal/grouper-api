@@ -18,7 +18,7 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
     @ConfigItem
     private String groupPrefix;
     
-    protected abstract List<ExternalGroup> getExternalGroups() throws Exception;
+    protected abstract List<ExternalNode> getExternalGroups() throws Exception;
     
     
    
@@ -37,7 +37,7 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
         
         GrouperDao gDao = new GrouperDaoImpl(grouperUser);
         
-        List<ExternalGroup> externalGroups = getExternalGroups();
+        List<ExternalNode> externalGroups = getExternalGroups();
         GrouperFolder root = new GrouperFolder(groupPrefix);
         loadChildGroupsAndFolders(gDao, root);
         
@@ -59,11 +59,11 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
         }
     }
 
-    private void removeGroupsForDeletedExternalGroups(GrouperDao gDao, List<ExternalGroup> externalGroups, GrouperFolder root)
+    private void removeGroupsForDeletedExternalGroups(GrouperDao gDao, List<ExternalNode> externalGroups, GrouperFolder root)
     {
       for(GrouperGroup group : root.getChildGroups())
       {
-          ExternalGroup externalGroup = findGroupByDisplayName(externalGroups, group.getDisplayName());
+          ExternalNode externalGroup = findExternalGroupByDisplayName(externalGroups, group.getDisplayName());
           if(externalGroup==null)
           {
               System.out.println("removing group "+group.getContainingFolderPath()+":"+group.getId());
@@ -72,48 +72,60 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
       }
       for(GrouperFolder folder : root.getChildFolders())
       {
-          ExternalGroup externalGroup = findGroupByDisplayName(externalGroups, folder.getDisplayName());
-          if(externalGroup==null)
+          ExternalFolder externalFolder = findExternalFolderByDisplayName(externalGroups, folder.getDisplayName());
+          if(externalFolder==null)
           {
               System.out.println("removing folder "+folder.getContainingFolderPath()+":"+folder.getId());
               gDao.removeStem(folder.getContainingFolderPath()+":"+folder.getId());
           }
           else
           {
-              removeGroupsForDeletedExternalGroups(gDao, externalGroup.getChildren(), folder);
+              removeGroupsForDeletedExternalGroups(gDao, externalFolder.getChildren(), folder);
           }
       }
     }
 
 
 
-    private ExternalGroup findGroupByDisplayName(List<ExternalGroup> externalGroups, String displayName)
+    private ExternalGroup findExternalGroupByDisplayName(List<ExternalNode> externalGroups, String displayName)
     {
         if (externalGroups == null) return null;
-        for (ExternalGroup group : externalGroups)
+        for (ExternalNode group : externalGroups)
         {
-            if (displayName.equals(group.getName())) { return group; }
+            if (displayName.equals(group.getName()) && group instanceof ExternalGroup) { return (ExternalGroup)group; }
+        }
+        return null;
+    }
+    private ExternalFolder findExternalFolderByDisplayName(List<ExternalNode> externalGroups, String displayName)
+    {
+        if (externalGroups == null) return null;
+        for (ExternalNode group : externalGroups)
+        {
+            if (displayName.equals(group.getName()) && group instanceof ExternalFolder) { return (ExternalFolder)group; }
         }
         return null;
     }
 
-    private void addMissingGroupsForNewExternalGroups(GrouperDao gDao, List<ExternalGroup> externalGroups, GrouperFolder root)
+    private void addMissingGroupsForNewExternalGroups(GrouperDao gDao, List<ExternalNode> externalGroups, GrouperFolder root)
     {
-      for(ExternalGroup externalGroup : externalGroups)
+      for(ExternalNode externalNode : externalGroups)
       {
-          GrouperGroup group = findGrouperGroupByDisplayName(root, externalGroup.getName());
-          if(group==null)
+          if(externalNode instanceof ExternalGroup)
           {
-              createGroupForExternalGroup(gDao, externalGroup, root.getFullPath());
+              GrouperGroup group = findGrouperGroupByDisplayName(root, externalNode.getName());
+              if(group==null)
+              {
+                  createGroupForExternalGroup(gDao, externalNode, root.getFullPath());
+              }
           }
-          if(externalGroup.hasChildren())
+          else if (externalNode instanceof ExternalFolder && ((ExternalFolder)externalNode).hasChildren())
           {
-              GrouperFolder folder = findGrouperFolderByDisplayName(root, externalGroup.getName());
+              GrouperFolder folder = findGrouperFolderByDisplayName(root, externalNode.getName());
               if(folder==null)
               {
-                  folder = createFolderForExternalGroup(gDao, externalGroup, root.getFullPath());
+                  folder = createFolderForExternalGroup(gDao, externalNode, root.getFullPath());
               }
-              addMissingGroupsForNewExternalGroups(gDao, externalGroup.getChildren(), folder);
+              addMissingGroupsForNewExternalGroups(gDao, ((ExternalFolder)externalNode).getChildren(), folder);
           }
       }
     }
@@ -144,7 +156,7 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
         return null;
     }
 
-    private void createGroupForExternalGroup(GrouperDao gDao, ExternalGroup externalGroup, String groupPrefix)
+    private void createGroupForExternalGroup(GrouperDao gDao, ExternalNode externalGroup, String groupPrefix)
     {
         System.out.println("adding group: "+groupPrefix+":"+externalGroup.getName());
         GrouperGroup group = new GrouperGroup();
@@ -153,7 +165,7 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
         group.setContainingFolderPath(groupPrefix);
         gDao.addGroup(group, adminUser, grouperUser);
     }
-    private GrouperFolder createFolderForExternalGroup(GrouperDao gDao, ExternalGroup externalGroup, String groupPrefix)
+    private GrouperFolder createFolderForExternalGroup(GrouperDao gDao, ExternalNode externalGroup, String groupPrefix)
     {
         System.out.println("adding folder: "+groupPrefix+":"+externalGroup.getName());
         GrouperFolder folder = new GrouperFolder();

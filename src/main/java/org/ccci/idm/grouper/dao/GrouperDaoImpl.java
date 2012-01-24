@@ -163,6 +163,17 @@ public class GrouperDaoImpl implements GrouperDao
         GroupFinder.findByName(grouperSession, group, true).deleteMember(SubjectFinder.findByIdOrIdentifier(member, true));
     }
     
+    @Override
+    public List<SsoUser> getMembers(String groupFullPath)
+    {
+        List<SsoUser> retVal = new ArrayList<SsoUser>();
+        Group group = GroupFinder.findByName(grouperSession, groupFullPath, true);
+        for(Member member : group.getMembers())
+        {
+            retVal.add(new SsoUser(member.getSubject().getId(), member.getSubject().getName()));
+        }
+        return retVal;
+    }
     
     public SsoUser getAttesterUsingAuditLog(String memberName, String groupName) throws Exception
     {
@@ -314,5 +325,18 @@ public class GrouperDaoImpl implements GrouperDao
         Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, false);
         if(membership==null) return null;
         return new GrouperMembership(memberName, group.getName(), getAttesterInternal(member, group).getUsername(), getExpirationInternal(member, group));
+    }
+
+    @Override
+    public void loadChildGroupsAndFoldersRecursively(GrouperFolder folder)
+    {
+        List<GrouperGroup> groups = loadAllGroups(folder.getFullPath());
+        List<GrouperFolder> folders = loadAllFolders(folder.getFullPath());
+        folder.setChildGroups(groups);
+        folder.setChildFolders(folders);
+        for(GrouperFolder child : folders)
+        {
+            loadChildGroupsAndFoldersRecursively(child);
+        }
     }
 }
