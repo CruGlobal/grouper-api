@@ -257,7 +257,9 @@ public class GrouperDaoImpl implements GrouperDao
 
         // get user groups, searching from the specified folder
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
+        if(subj==null) throw new RuntimeException("cannot find user: "+memberName);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) return memberships; // not a member yet
         Stem stem = folder != null ? StemFinder.findByName(grouperSession, folder, true) : null;
         Stem.Scope scope = folder != null ? Stem.Scope.SUB : null;
         Set<Group> groups = member.getGroups(Group.getDefaultList(), null, stem, scope, null, null);
