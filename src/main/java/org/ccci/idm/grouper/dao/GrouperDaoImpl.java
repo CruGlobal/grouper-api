@@ -34,19 +34,14 @@ import edu.internet2.middleware.subject.Subject;
 
 public class GrouperDaoImpl implements GrouperDao
 {
-    private String sessionOwner = null;
     private Subject loggedInSubject = null;
     private Member loggedInMember = null;
     
     private GrouperSession grouperSession = null;
     private GrouperContext grouperContext = null;
 
-    final private String SystemFolder = "sys";
-    final private String AttestationAttributeDefName = "attestation";
-
     public GrouperDaoImpl(String sessionOwner) throws SessionException
     {
-        this.sessionOwner = sessionOwner;
         if(sessionOwner==null)
         {
             grouperSession = GrouperSession.startRootSession();
@@ -179,6 +174,7 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Subject subj = SubjectFinder.findById(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession, subj, true);
+        if(member==null) throw new RuntimeException("member " + memberName + " is null for group " + groupName);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
         
         List<AuditEntry> entries = (new UserAuditQuery()).addAuditTypeAction("membership", "addGroupMembership").addAuditTypeFieldValue("memberId", member.getUuid()).addAuditTypeFieldValue("groupId", group.getUuid()).execute();
@@ -202,6 +198,7 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) throw new RuntimeException("member " + memberName + " is null for group " + groupName);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
 
         return getAttesterInternal(member, group);
@@ -278,6 +275,7 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) throw new RuntimeException("member " + memberName + " is null for group " + groupName);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
         
         return getExpirationInternal(member, group);
@@ -295,6 +293,7 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) throw new RuntimeException("member " + memberName + " is null for group " + groupName);
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
         
         Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, true);
@@ -323,6 +322,7 @@ public class GrouperDaoImpl implements GrouperDao
     {
         Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
         Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) return null;
         Group group = GroupFinder.findByName(grouperSession, groupName, true);
         Membership membership = group.getImmediateMembership(Group.getDefaultList(), member, false, false);
         if(membership==null) return null;
