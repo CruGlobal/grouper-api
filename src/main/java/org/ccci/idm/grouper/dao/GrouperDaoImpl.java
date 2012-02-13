@@ -328,6 +328,19 @@ public class GrouperDaoImpl implements GrouperDao
         if(membership==null) return null;
         return new GrouperMembership(memberName, group.getName(), getAttesterInternal(member, group).getUsername(), getExpirationInternal(member, group));
     }
+    
+    @Override
+    public List<GrouperMembership> getMemberships(String groupName)
+    {
+        Group group = GroupFinder.findByName(grouperSession, groupName, true);
+        Set<Membership> memberships = group.getImmediateMemberships();
+        List<GrouperMembership> retVal = new ArrayList<GrouperMembership>();
+        for(Membership m : memberships)
+        {
+            retVal.add(new GrouperMembership(m.getMember().getSubject().getName(), group.getName(), getAttesterInternal(m.getMember(), group).getUsername(), getExpirationInternal(m.getMember(), group)));
+        }
+        return retVal;
+    }
 
     @Override
     public void loadChildGroupsAndFoldersRecursively(GrouperFolder folder)
