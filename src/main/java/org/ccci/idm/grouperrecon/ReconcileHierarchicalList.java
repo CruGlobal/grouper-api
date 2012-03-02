@@ -1,5 +1,6 @@
 package org.ccci.idm.grouperrecon;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ccci.idm.grouper.dao.GrouperDao;
@@ -7,27 +8,28 @@ import org.ccci.idm.grouper.dao.GrouperDaoImpl;
 import org.ccci.idm.grouper.obj.GrouperFolder;
 import org.ccci.idm.grouper.obj.GrouperGroup;
 
-import edu.internet2.middleware.grouper.util.ConfigItem;
-
 public abstract class ReconcileHierarchicalList implements ReconcileList
 {
-    @ConfigItem
     private String grouperUser;
-    @ConfigItem
-    private String adminUser;
-    @ConfigItem
     private String groupPrefix;
+    
+    private List<String> adminUsers = new ArrayList<String>();
     
     protected abstract List<ExternalNode> getExternalGroups() throws Exception;
     
     
    
-    public ReconcileHierarchicalList(String grouperUser, String adminUser, String groupPrefix)
+    public ReconcileHierarchicalList(String grouperUser, String adminUsersStr, String groupPrefix)
     {
         super();
         this.grouperUser = grouperUser;
-        this.adminUser = adminUser;
         this.groupPrefix = groupPrefix;
+        String admins[] = adminUsersStr.split(",");
+        adminUsers.add(grouperUser);
+        for(String admin : admins)
+        {
+            adminUsers.add(admin.trim());
+        }
     }
 
 
@@ -163,7 +165,7 @@ public abstract class ReconcileHierarchicalList implements ReconcileList
         group.setDisplayName(externalGroup.getName());
         group.setId(computeGroupId(externalGroup.getName()));
         group.setContainingFolderPath(groupPrefix);
-        gDao.addGroup(group, adminUser, grouperUser);
+        gDao.addGroup(group, adminUsers.toArray(new String[]{}));
     }
     private GrouperFolder createFolderForExternalGroup(GrouperDao gDao, ExternalNode externalGroup, String groupPrefix)
     {

@@ -129,7 +129,8 @@ public class GrouperDaoImpl implements GrouperDao
         Group createdGroup = stem.addChildGroup(newGroup.getId(), newGroup.getDisplayName());
         if(admins!=null) for(String admin : admins)
         {
-            createdGroup.grantPriv(SubjectFinder.findById(admin, true), AccessPrivilege.ADMIN, false);
+            Subject subj = SubjectFinder.findByIdOrIdentifier(admin, true);
+            createdGroup.grantPriv(subj, AccessPrivilege.ADMIN, false);
         }
     }
 
