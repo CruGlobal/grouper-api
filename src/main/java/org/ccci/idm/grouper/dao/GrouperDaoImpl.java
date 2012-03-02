@@ -270,6 +270,32 @@ public class GrouperDaoImpl implements GrouperDao
 
         return memberships;
     }
+    
+    public Set<GrouperMembership> getAllMembershipsWithinFolder(String memberName, String folder)
+    {
+        Set<GrouperMembership> memberships = new HashSet<GrouperMembership>();
+
+        // get user groups, searching from the specified folder
+        Subject subj = SubjectFinder.findByIdOrIdentifier(memberName, true);
+        if(subj==null) throw new RuntimeException("cannot find user: "+memberName);
+        Member member = MemberFinder.findBySubject(grouperSession,subj, false);
+        if(member==null) return memberships; // not a member yet
+        
+        Set<Membership> allMemberships = member.getImmediateMemberships();
+        for(Membership grouperMembership : allMemberships)
+        {
+            if(grouperMembership.getGroupName().startsWith(folder))
+            {
+                Group group = grouperMembership.getGroup();
+                if(group!=null)
+                {
+                    memberships.add(new GrouperMembership(memberName, group.getName(), getAttesterInternal(member, group).getUsername(), getExpirationInternal(member, group)));
+                }
+            }
+        }
+
+        return memberships;
+    }
 
     public Date getExpiration(String memberName, String groupName)
     {

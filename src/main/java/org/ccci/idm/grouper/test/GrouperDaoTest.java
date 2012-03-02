@@ -1,9 +1,11 @@
 package org.ccci.idm.grouper.test;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.ccci.idm.grouper.dao.GrouperDao;
 import org.ccci.idm.grouper.dao.GrouperDaoImpl;
+import org.ccci.idm.grouper.obj.GrouperMembership;
 import org.ccci.idm.obj.SsoUser;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,6 +14,31 @@ public class GrouperDaoTest
 {
     public GrouperDaoTest()
     {
+    }
+    
+    @Test
+    public void testGetAllMemberships() throws Exception
+    {
+        String requester = "nathan.kopp@ccci.org";
+        String member = "lee.braddock@ccci.org";
+        String folder = "ccci";
+
+        GrouperDao grouperDao = null;
+
+        try
+        {
+            grouperDao = new GrouperDaoImpl(requester);
+            Set<GrouperMembership> memberships = grouperDao.getAllMembershipsWithinFolder(member, folder);
+            for(GrouperMembership m : memberships)
+            {
+                System.out.println(m.getGroup());
+            }
+        }
+        finally
+        {
+            if (grouperDao != null)
+                grouperDao.close();
+        }
     }
 
     //@Test
@@ -50,7 +77,7 @@ public class GrouperDaoTest
         }
     }
     
-    @Test
+    //@Test
     public void testGetSetExpiration() throws Exception
     {
         String requester = "nathan.kopp@ccci.org";

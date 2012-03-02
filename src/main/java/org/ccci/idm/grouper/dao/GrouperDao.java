@@ -27,7 +27,8 @@ public interface GrouperDao
     public void addMember(String user, String group) throws Exception;    
     public void deleteMember(String member, String group) throws Exception;
     public List<SsoUser> getMembers(String groupFullPath);
-    List<GrouperMembership> getMemberships(String groupName);
+    public List<GrouperMembership> getMemberships(String groupName);
+    public Set<GrouperMembership> getAllMembershipsWithinFolder(String memberName, String folder);
     public SsoUser getAttester(String member, String group) throws Exception;
     public void setExpiration(String member, String group, Date expiration);
     public Date getExpiration(String member, String group);
