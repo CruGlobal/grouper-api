@@ -31,15 +31,15 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
     <!-- 
     <init-param>
       <param-name>PROVIDER_URL</param-name>
-      <param-value>ldap://hart-a935.ccci.org:389</param-value>
+      <param-value>ldap-url</param-value>
     </init-param>
     <init-param>
       <param-name>SECURITY_PRINCIPAL</param-name>
-      <param-value>cn=B3712AFF-88C6-A4B8-6F50-A2E4C4C6A241,cn=sso,dc=mygcx,dc=org</param-value>
+      <param-value>admin-user</param-value>
     </init-param>
     <init-param>
       <param-name>SECURITY_CREDENTIALS</param-name>
-      <param-value>Grouper1</param-value>
+      <param-value>admin-pwd</param-value>
     </init-param>
      -->
     <!-- ====================================== -->
@@ -53,11 +53,11 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
     </init-param>
     <init-param>
       <param-name>Name_AttributeType</param-name>
-      <param-value>displayName</param-value>
+      <param-value>userPrincipalName</param-value>
     </init-param>
     <init-param>
       <param-name>Description_AttributeType</param-name>
-      <param-value>displayName</param-value>
+      <param-value>userPrincipalName</param-value>
     </init-param>
     
     <!--
@@ -70,7 +70,7 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
         <param>
             <param-name>filter</param-name>
             <param-value>
-                (&amp; (cn=%TERM%) (objectclass=iPerson))
+                (&amp; (cn=%TERM%) (objectclass=cruPerson))
             </param-value>
         </param>
         <param>
@@ -81,10 +81,8 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
         </param>
         <param>
             <param-name>base</param-name>
-            <!-- cn=sso,dc=mygcx,dc=org -->
-            <!-- ou=Xellerate Users,dc=mygcx,dc=org -->
             <param-value>
-                cn=sso,dc=mygcx,dc=org
+                CN=Users,CN=idm,DC=cru,DC=org
             </param-value>
         </param>
     </search>
@@ -94,7 +92,7 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
         <param>
             <param-name>filter</param-name>
             <param-value>
-                (&amp; (|(cn=%TERM%)(displayName=%TERM%)) (objectclass=iPerson))
+                (&amp; (|(cn=%TERM%)(userPrincipalName=%TERM%)) (objectclass=cruPerson))
             </param-value>
         </param>
         <param>
@@ -106,7 +104,7 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
         <param>
             <param-name>base</param-name>
             <param-value>
-                cn=sso,dc=mygcx,dc=org
+                CN=Users,CN=idm,DC=cru,DC=org
             </param-value>
         </param>
     </search>
@@ -120,7 +118,7 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
             </param-value>
              -->
             <param-value>
-                (&amp; (|(cn=%TERM%)(displayName=*%TERM%*))(objectclass=iPerson))
+                (&amp; (|(cn=%TERM%)(userPrincipalName=*%TERM%*))(objectclass=cruPerson))
             </param-value>
         </param>
         <param>
@@ -132,14 +130,14 @@ $Id: sources.example.xml,v 1.8 2009/08/11 20:18:09 mchyzer Exp $
          <param>
             <param-name>base</param-name>
             <param-value>
-                cn=sso,dc=mygcx,dc=org
+                CN=Users,CN=idm,DC=cru,DC=org
             </param-value>
         </param>
     </search>
     <!-- 
     ///Attributes you would like to display when doing a search
      --> 
-    <attribute>displayName</attribute>
+    <attribute>userPrincipalName</attribute>
     <attribute>givenName</attribute>
     <attribute>sn</attribute>
    
