@@ -56,12 +56,14 @@ public class ProvisioningConsumer extends ChangeLogConsumerBase
     public long processChangeLogEntries(List<ChangeLogEntry> changeLogEntryList, ChangeLogProcessorMetadata changeLogProcessorMetadata)
     {
         String consumerName = changeLogProcessorMetadata.getConsumerName();
-        long lastProcessedId = -1;
-
+        //long lastProcessedId = -1;
+        long lastProcessedId = changeLogEntryList.get(0).getSequenceNumber()-1;
+        ChangeEvent event = null;
+        
         try
         {
             loadAndInitConnectorIfNecessary(consumerName);
-
+            
             for (ChangeLogEntry changeLogEntry : changeLogEntryList)
             {
                 if (LOG.isDebugEnabled())
@@ -69,7 +71,7 @@ public class ProvisioningConsumer extends ChangeLogConsumerBase
                     LOG.debug("Processing event number " + changeLogEntry.getSequenceNumber());
                 }
 
-                ChangeEvent event = createEventFromLogEntry(changeLogEntry, consumerName);
+                event = createEventFromLogEntry(changeLogEntry, consumerName);
 
                 boolean shouldDispatchEvent = runElFilter(consumerName, event);
 
@@ -95,12 +97,12 @@ public class ProvisioningConsumer extends ChangeLogConsumerBase
         catch (Exception e)
         {
             e.printStackTrace();
-            if (lastProcessedId == -1)
+            if (lastProcessedId == -1 && event==null)
             {
                 throw new RuntimeException("Couldn't process any records", e);
             }
             LOG.error("Error processing ChangeLogEntry " + lastProcessedId, e);
-            changeLogProcessorMetadata.registerProblem(e, "Error processing record " + lastProcessedId, lastProcessedId);
+            changeLogProcessorMetadata.registerProblem(e, "Error processing record " + lastProcessedId, event!=null?event.getSequenceNumber():lastProcessedId);
             return lastProcessedId;
         }
         finally
