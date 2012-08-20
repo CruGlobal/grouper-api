@@ -27,6 +27,7 @@ import edu.internet2.middleware.grouper.audit.GrouperEngineBuiltin;
 import edu.internet2.middleware.grouper.audit.UserAuditQuery;
 import edu.internet2.middleware.grouper.exception.GroupNotFoundException;
 import edu.internet2.middleware.grouper.exception.SessionException;
+import edu.internet2.middleware.grouper.exception.StemNotFoundException;
 import edu.internet2.middleware.grouper.hibernate.GrouperContext;
 import edu.internet2.middleware.grouper.privs.AccessPrivilege;
 import edu.internet2.middleware.grouper.privs.NamingPrivilege;
@@ -102,7 +103,7 @@ public class GrouperDaoImpl implements GrouperDao
             if(stem==null) return null;
             return new GrouperFolder(stem);
         }
-        catch (GroupNotFoundException e)
+        catch (StemNotFoundException e)
         {
             return null;
         }
