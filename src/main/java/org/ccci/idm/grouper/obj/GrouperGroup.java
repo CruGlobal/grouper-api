@@ -1,5 +1,11 @@
 package org.ccci.idm.grouper.obj;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.WordUtils;
+import org.ccci.util.strings.Strings;
+
 import edu.internet2.middleware.grouper.Group;
 import edu.internet2.middleware.grouper.Stem;
 
@@ -24,6 +30,22 @@ public class GrouperGroup
         containingFolderPath = parentStem.getName();
         containingFolderDisplayName = parentStem.getDisplayName();
     }
+
+	public GrouperGroup(String containingFolderDisplayName, String displayName, String id, String containingFolderPath)
+	{
+		setContainingFolderDisplayName(containingFolderDisplayName);
+		setDisplayName(displayName);
+		setContainingFolderPath(containingFolderPath);
+		setId(id);
+	}
+
+	public GrouperGroup(String groupName)
+	{
+		this(folderDisplayNameFromPath(groupName.substring(0, groupName.lastIndexOf(":"))), 
+				groupName.substring(groupName.lastIndexOf(":") + 1), 
+				groupName.substring(groupName.lastIndexOf(":") + 1),
+				groupName.substring(0, groupName.lastIndexOf(":")));		
+	}
 
     public String getFullPath()
     {
@@ -74,4 +96,32 @@ public class GrouperGroup
     {
         this.containingFolderDisplayName = containingFolderDescr;
     }
+    
+	private static String folderDisplayNameFromPath(String folderPath)
+	{
+		Map<String, String> pathToDisplayName = new HashMap<String, String>()
+		{
+			{
+				put("ccci", "Campus Crusade");
+				put("itroles", "IT Roles");
+				put("uscore", "U.S. Core");
+			}
+		};
+
+		String delimiter = ":";
+		String[] tokens = folderPath.split(delimiter);
+		if (tokens.length < 1)
+			return folderPath;
+
+		String folderDisplayName = "";
+		for (String token : tokens)
+		{
+			if (!Strings.isEmpty(folderDisplayName))
+				folderDisplayName += delimiter;
+
+			folderDisplayName += pathToDisplayName.get(token) != null ? pathToDisplayName.get(token) : WordUtils.capitalize(token);
+		}
+
+		return folderDisplayName;
+	}
 }
